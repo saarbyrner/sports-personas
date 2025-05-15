@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elite Sports Team Org Structure</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -16,6 +16,7 @@
             background-color: var(--light-bg);
             color: var(--light-text-primary);
             transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden; /* Prevent horizontal scroll on body */
         }
         h1, h2, .font-header {
             font-family: 'Bebas Neue', sans-serif;
@@ -24,47 +25,150 @@
 
         :root {
             --light-bg: #FFFFFF;
-            --light-bg-secondary: #F3F4F6;
-            --light-text-primary: #222222;
-            --light-text-secondary: #888888;
-            --light-border: #E5E7EB;
-            --light-accent1: #0052FF; /* Blue */
-            --light-accent2: #6DD400; /* Green */
-            --light-accent3: #FF7A00; /* Orange */
-            --light-accent4: #FF3D00; /* Red */
-            --light-accent5: #FFDA00; /* Yellow */
-            --light-accent6: #B0B0B0; /* Light Gray */
-            --light-node-bg: #E0E7FF;
-            --light-node-bg-hover: #C7D2FE;
-            --light-node-border: var(--light-accent1);
-            --light-node-text: #1E1B4B;
-            --light-node-dept-text: #047857;
+            --light-bg-secondary: #F9FAFB;
+            --light-text-primary: #1F2937;
+            --light-text-secondary: #6B7280;
+            --light-border: #D1D5DB;
+            --light-accent1: #2563EB; /* Blue */
+            --light-accent1-hover: #1D4ED8;
+            --light-accent2: #10B981; /* Green */
+            --light-accent3: #F59E0B; /* Orange */
+            --light-accent4: #EF4444; /* Red */
+            --light-accent6: #9CA3AF; /* For inactive button border */
         }
 
-        .google-visualization-orgchart-node {
-            border: 2px solid var(--light-node-border) !important;
-            background-color: var(--light-node-bg) !important;
-            border-radius: 8px !important;
-            padding: 6px !important;
-            box-shadow: 0 0px 0px rgba(0,0,0,0.1) !important;
-            cursor: pointer !important;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+        /* View Switching Buttons - Updated for smaller size */
+        .view-btn {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 500;
+            font-size: 0.875rem; /* Smaller font size (text-sm) */
+            padding: 0.4rem 0.8rem; /* Reduced padding */
+            border-radius: 0.375rem; /* Slightly smaller border-radius (rounded-md) */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease-in-out;
+            border: 1px solid transparent;
         }
-        .google-visualization-orgchart-node:hover {
-             background-color: var(--light-node-bg-hover) !important;
-             border-color: var(--light-accent6) !important;
+        .view-btn svg { /* Adjust SVG size in buttons */
+            width: 0.875rem; /* 14px */
+            height: 0.875rem; /* 14px */
+            margin-right: 0.375rem; /* Reduced margin */
         }
+
+        .view-btn.active {
+            background-color: var(--light-accent1);
+            color: white;
+            border-color: var(--light-accent1);
+        }
+        .view-btn.active:hover {
+            background-color: var(--light-accent1-hover);
+        }
+        .view-btn.inactive {
+            background-color: var(--light-bg);
+            color: var(--light-text-secondary);
+            border-color: var(--light-border);
+        }
+        .view-btn.inactive:hover {
+            background-color: var(--light-bg-secondary);
+            border-color: var(--light-accent6);
+            color: var(--light-text-primary);
+        }
+
+        .clickable-row { cursor: pointer; }
+        .view-container { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
+        .hidden-view { opacity: 0; transform: translateY(10px); height: 0; overflow: hidden; display: none !important; }
+        .visible-view { opacity: 1; transform: translateY(0); height: auto; display: block; }
+
+        /* Modal Styling */
+        .modal {
+            transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+            backdrop-filter: blur(4px);
+        }
+        .modal-hidden { opacity: 0; transform: scale(0.95) translateY(10px); pointer-events: none; }
+        .modal-visible { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+
+        #modal-content-wrapper {
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #modal-body-content {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        #modal-description {
+            padding-right: 0.5rem; /* For scrollbar */
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        #modal-description ul { list-style: disc; margin-left: 1.5rem; margin-top: 0.75rem; margin-bottom: 0.75rem; }
+        #modal-description li { margin-bottom: 0.35rem; }
+        #modal-description strong { color: var(--light-accent1); font-weight: 600; }
+        #modal-description p { margin-bottom: 0.75rem; }
+
+        /* D3 Chart Specific Styles */
+        #d3-chart-container {
+            width: 100%;
+            height: 650px;
+            overflow: hidden;
+            border: 1px solid var(--light-border);
+            border-radius: 0.5rem;
+            background-color: var(--light-bg-secondary);
+            cursor: grab;
+        }
+        #d3-chart-container:active {
+            cursor: grabbing;
+        }
+
+        .d3-node rect.node-rect {
+            stroke-width: 1px;
+            rx: 8;
+            ry: 8;
+            transition: fill 0.2s ease, stroke 0.2s ease, filter 0.2s ease;
+            filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.1));
+        }
+        .d3-node:hover rect.node-rect {
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.15)) brightness(0.97);
+        }
+        .d3-node text {
+            pointer-events: none;
+            font-family: 'Inter', sans-serif;
+        }
+        .d3-node text.node-name {
+            font-size: 13px;
+            font-weight: 600;
+            fill: #1E3A8A;
+        }
+        .d3-node text.node-department-text {
+            font-size: 10px;
+            font-weight: 500;
+            fill: white;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            dominant-baseline: middle;
+        }
+        .d3-link {
+            fill: none;
+            stroke: #CBD5E1;
+            stroke-width: 1.5px;
+        }
+
+        .badge-fill-coaching { fill: var(--light-accent2); }
+        .badge-fill-medical { fill: var(--light-accent4); }
+        .badge-fill-management { fill: var(--light-accent3); }
+        .badge-fill-performance { fill: var(--light-accent1); }
+        .badge-fill-default { fill: var(--light-accent6); }
 
         .dept-badge {
             display: inline-block;
-            padding: 2px 8px !important;
-            border-radius: 12px;
+            padding: 3px 10px !important;
+            border-radius: 16px;
             font-size: 0.7rem;
             font-weight: 600;
             color: white;
-            line-height: 1.2;
-            /* white-space: nowrap; Removed to allow wrapping */
-            margin-top: 4px;
+            line-height: 1.3;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         .badge-coaching { background-color: var(--light-accent2); }
         .badge-medical { background-color: var(--light-accent4); }
@@ -72,209 +176,653 @@
         .badge-performance { background-color: var(--light-accent1); }
         .badge-default { background-color: var(--light-accent6); color: var(--light-text-primary); }
 
-        .org-node-name {
-             font-family: 'Bebas Neue', sans-serif;
-             letter-spacing: 0.05em;
-             font-size: 0.9rem;
-             color: var(--light-node-text) !important;
-             margin-bottom: 0;
+        .loader {
+            border: 4px solid var(--light-bg-secondary);
+            border-top: 4px solid var(--light-accent1);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .chart-loading-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            height: 100%;
+        }
+        .chart-loading-container p {
+            margin-top: 1rem;
+            color: var(--light-text-secondary);
+            font-size: 0.9rem;
         }
 
-        .clickable-row { cursor: pointer; }
-        .view-container { transition: opacity 0.5s ease-in-out; }
-        .hidden-view { opacity: 0; height: 0; overflow: hidden; display: none; }
-        .visible-view { opacity: 1; height: auto; display: block; }
-
-        .modal { transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
-        .modal-hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
-        .modal-visible { opacity: 1; transform: scale(1); pointer-events: auto; }
-        #modal-description { max-height: 60vh; overflow-y: auto; }
-        #modal-description ul { list-style: disc; margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
-        #modal-description li { margin-bottom: 0.25rem; }
-        #modal-description strong { color: var(--light-accent1); }
-
     </style>
-    </head>
-<body class="min-h-screen flex flex-col">
-    <div class="container mx-auto max-w-7xl flex-grow flex flex-col">
+</head>
+<body class="min-h-screen flex flex-col bg-[--light-bg]">
+    <div class="container mx-auto max-w-full lg:max-w-7xl flex-grow flex flex-col">
 
-        <header class="p-4 md:px-6 md:py-4 flex justify-between items-center">
-            <h1 class="text-3xl md:text-4xl font-header text-[--light-text-primary]">
-                Elite Sports Team Organizational Structure
+        <header class="p-4 md:px-6 md:py-5 flex flex-wrap justify-between items-center border-b border-[--light-border]">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-header text-[--light-text-primary] mb-3 sm:mb-0">
+                Elite Sports Team Structure
             </h1>
+            <div class="flex flex-wrap justify-start sm:justify-end gap-2 sm:gap-3">
+                <button id="show-chart-btn" class="view-btn">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M7 3a1 1 0 0 0-1 1v2.586a1 1 0 0 0 .293.707l5.414 5.414a1 1 0 0 0 .707.293H15a1 1 0 0 0 1-1v-2.586a1 1 0 0 0-.293-.707l-5.414-5.414A1 1 0 0 0 9.586 3H7ZM5 6.586a3 3 0 0 1-.879-2.121V4a3 3 0 0 1 3-3h2.586a3 3 0 0 1 2.121.879l5.414 5.414A3 3 0 0 1 18 10.414V13a3 3 0 0 1-3 3h-2.586a3 3 0 0 1-2.121-.879l-5.414-5.414A3 3 0 0 1 5 6.586Z" />
+                        <path d="M3 7a1 1 0 0 1 1-1h2.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V15a1 1 0 0 1-1 1h-2.586a1 1 0 0 1-.707-.293l-5.414-5.414A1 1 0 0 1 3 8.586V7Z" />
+                     </svg>
+                    Org Chart
+                </button>
+                <button id="show-table-btn" class="view-btn">
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.25 3A2.25 2.25 0 0 0 2 5.25v9.5A2.25 2.25 0 0 0 4.25 17h11.5A2.25 2.25 0 0 0 18 14.75v-9.5A2.25 2.25 0 0 0 15.75 3H4.25ZM3.5 6.75v2.5h13v-2.5h-13Zm0 3.5v4.5A.75.75 0 0 0 4.25 15h11.5a.75.75 0 0 0 .75-.75v-4.5h-13Z" clip-rule="evenodd" />
+                     </svg>
+                    Table View
+                </button>
+            </div>
         </header>
 
-        <div class="px-4 md:px-6 py-4 flex flex-wrap justify-start gap-4">
-            <button id="show-chart-btn" class="inline-flex items-center font-semibold py-2 px-5 rounded-lg shadow transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2">
-                    <path d="M7 3a1 1 0 0 0-1 1v2.586a1 1 0 0 0 .293.707l5.414 5.414a1 1 0 0 0 .707.293H15a1 1 0 0 0 1-1v-2.586a1 1 0 0 0-.293-.707l-5.414-5.414A1 1 0 0 0 9.586 3H7ZM5 6.586a3 3 0 0 1-.879-2.121V4a3 3 0 0 1 3-3h2.586a3 3 0 0 1 2.121.879l5.414 5.414A3 3 0 0 1 18 10.414V13a3 3 0 0 1-3 3h-2.586a3 3 0 0 1-2.121-.879l-5.414-5.414A3 3 0 0 1 5 6.586Z" />
-                    <path d="M3 7a1 1 0 0 1 1-1h2.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V15a1 1 0 0 1-1 1h-2.586a1 1 0 0 1-.707-.293l-5.414-5.414A1 1 0 0 1 3 8.586V7Z" />
-                 </svg>
-                Org Chart View
-            </button>
-            <button id="show-table-btn" class="inline-flex items-center font-semibold py-2 px-5 rounded-lg shadow transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2">
-                    <path fill-rule="evenodd" d="M4.25 3A2.25 2.25 0 0 0 2 5.25v9.5A2.25 2.25 0 0 0 4.25 17h11.5A2.25 2.25 0 0 0 18 14.75v-9.5A2.25 2.25 0 0 0 15.75 3H4.25ZM3.5 6.75v2.5h13v-2.5h-13Zm0 3.5v4.5A.75.75 0 0 0 4.25 15h11.5a.75.75 0 0 0 .75-.75v-4.5h-13Z" clip-rule="evenodd" />
-                 </svg>
-                Table View
-            </button>
-        </div>
-
         <main class="flex-grow p-4 md:px-6 md:py-6 overflow-auto">
-            <div id="chart-view" class="view-container bg-[--light-bg-secondary] border border-[--light-border] rounded-lg p-4 overflow-auto">
-                <div id="chart_div" class="w-full min-h-[500px]">
-                     <div class="flex justify-center items-center h-full">
-                         <p class="text-[--light-text-secondary]">Loading Chart...</p>
+            <div id="chart-view" class="view-container shadow-sm">
+                <div id="d3-chart-container">
+                     <div class="chart-loading-container">
+                         <div class="loader"></div>
+                         <p>Loading D3 Chart...</p>
                      </div>
                 </div>
             </div>
 
-            <div id="table-view" class="view-container bg-[--light-bg-secondary] border border-[--light-border] rounded-lg p-4 overflow-x-auto">
+            <div id="table-view" class="view-container bg-[--light-bg-secondary] border border-[--light-border] rounded-lg p-0 sm:p-4 md:p-6 overflow-x-auto shadow-sm">
                 <table id="roles-table" class="min-w-full divide-y divide-[--light-border]">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th scope="col" class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reports To</th>
-                            <th scope="col" class="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reports To</th>
+                            <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-[--light-border]">
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </main>
-
     </div>
 
-    <div id="role-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 modal modal-hidden px-4">
-         <div class="bg-[--light-bg] rounded-lg shadow-xl p-6 max-w-lg w-full mx-auto border border-[--light-border]">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-[--light-border]">
-                <h2 id="modal-title" class="text-2xl font-header text-[--light-accent1]">Role Details</h2>
-                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-700 text-3xl font-light leading-none">&times;</button>
+    <div id="role-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 modal modal-hidden p-4">
+         <div id="modal-content-wrapper" class="bg-[--light-bg] rounded-lg shadow-xl w-full max-w-xl mx-auto border border-[--light-border]">
+            <div class="flex justify-between items-center p-4 sm:p-5 border-b border-[--light-border] flex-shrink-0">
+                <h2 id="modal-title" class="text-xl sm:text-2xl font-header text-[--light-accent1]">Role Details</h2>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors text-3xl sm:text-4xl font-light leading-none">&times;</button>
             </div>
-            <div id="modal-description" class="text-sm text-[--light-text-primary]"></div>
+            <div id="modal-body-content" class="p-4 sm:p-5 flex flex-col md:flex-row gap-4">
+                <div class="md:w-1/3 flex-shrink-0 text-center">
+                    <img id="modal-image" src="https://placehold.co/128x128/EFF6FF/1E3A8A?text=Role" alt="Role Image" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full mx-auto mb-3 border-2 border-[--light-accent1] shadow-md object-cover">
+                </div>
+                <div id="modal-description" class="md:w-2/3 text-sm text-[--light-text-primary]">
+                    </div>
+            </div>
         </div>
     </div>
 
     <script type="text/javascript">
        const orgData = [
-            { id: 1, name: "CEO / Team President", parentId: null, department: "Management", description: `<strong>Role:</strong> Chief Executive Officer (CEO) or Team President<br><br> <strong>Responsibilities:</strong> <ul> <li>Sets the overall strategic direction and vision for the organization.</li> <li>Oversees all business operations, including finance, marketing, and administration.</li> <li>Represents the team in league matters and major stakeholder interactions.</li> <li>Ultimately responsible for the organization's financial health and public image.</li> </ul> <strong>Key Interactions:</strong> Board of Directors, General Manager, Heads of Departments (Finance, Marketing, Operations).<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 2, name: "General Manager / Sporting Director", parentId: 1, department: "Management", description: `<strong>Role:</strong> General Manager (GM) or Sporting Director<br><br> <strong>Responsibilities:</strong> <ul> <li>Manages all aspects of the team's roster, including player acquisitions, trades, and contract negotiations.</li> <li>Hires and manages the Head Coach and often the heads of performance/medical departments.</li> <li>Oversees scouting departments (professional and amateur).</li> <li>Accountable for the team's competitive success and long-term athletic strategy.</li> </ul> <strong>Key Interactions:</strong> CEO/President, Head Coach, Scouting Department, Player Agents, Medical/Performance Heads.<br> <span class="text-xs italic text-gray-500">[cite: 260-262, 307]</span>` },
-            { id: 3, name: "Operations Manager / Athletic Director", parentId: 1, department: "Management", description: `<strong>Role:</strong> Operations Manager or Athletic Director<br><br> <strong>Responsibilities:</strong> <ul> <li>Manages team logistics, including travel arrangements, accommodation, and scheduling.</li> <li>Oversees facility management (training grounds, stadium operations on game day).</li> <li>Manages equipment procurement and maintenance.</li> <li>Ensures compliance with league regulations regarding operations.</li> </ul> <strong>Key Interactions:</strong> CEO/President, GM, Head Coach, Travel Coordinators, Facility Staff, Equipment Managers.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 4, name: "Finance Manager / CFO", parentId: 1, department: "Management", description: `<strong>Role:</strong> Finance Manager or Chief Financial Officer (CFO)<br><br> <strong>Responsibilities:</strong> <ul> <li>Develops and manages the team's budget.</li> <li>Oversees all financial reporting, accounting, and payroll.</li> <li>Manages cash flow and financial risk.</li> <li>Ensures financial compliance and strategy alignment with organizational goals.</li> </ul> <strong>Key Interactions:</strong> CEO/President, GM (for player budget), Department Heads.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 5, name: "Marketing / PR Manager", parentId: 1, department: "Management", description: `<strong>Role:</strong> Marketing and Public Relations (PR) Manager<br><br> <strong>Responsibilities:</strong> <ul> <li>Develops and executes marketing strategies to build the team brand and engage fans.</li> <li>Manages public relations, media interactions, and team communications.</li> <li>Oversees social media presence, website content, and advertising campaigns.</li> <li>Manages sponsorship activation and relationships.</li> </ul> <strong>Key Interactions:</strong> CEO/President, GM, Players (for appearances), Media Outlets, Sponsors.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 6, name: "Human Resources Manager", parentId: 1, department: "Management", description: `<strong>Role:</strong> Human Resources (HR) Manager<br><br> <strong>Responsibilities:</strong> <ul> <li>Manages recruitment, hiring, and onboarding for non-athletic staff.</li> <li>Oversees employee relations, benefits administration, and performance management.</li> <li>Ensures compliance with labor laws and regulations.</li> <li>Supports organizational development and workplace culture initiatives.</li> </ul> <strong>Key Interactions:</strong> CEO/President, Department Heads, All Staff.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 7, name: "Head Coach", parentId: 2, department: "Coaching", description: `<strong>Role:</strong> Head Coach<br><br> <strong>Responsibilities:</strong> <ul> <li>Leads the entire coaching staff and directs all on-field activities.</li> <li>Develops game strategies, tactical plans, and training methodologies.</li> <li>Makes key in-game decisions and player selections.</li> <li>Motivates players and fosters team cohesion.</li> <li>Often collaborates closely with the GM on roster decisions.</li> </ul> <strong>Key Interactions:</strong> General Manager, Assistant Coaches, Specialist Coaches, Performance Analysts, Medical Staff, Players.<br> <span class="text-xs italic text-gray-500">[cite: 198-201, 307]</span>` },
-            { id: 8, name: "Assistant Coach (Offense)", parentId: 7, department: "Coaching", description: `<strong>Role:</strong> Assistant Coach (e.g., Offensive Coordinator)<br><br> <strong>Responsibilities:</strong> <ul> <li>Assists the Head Coach with specific areas of game planning (e.g., offense).</li> <li>Conducts drills and provides technical instruction during training sessions.</li> <li>Contributes to player development and performance evaluation.</li> <li>May lead specific positional groups.</li> </ul> <strong>Key Interactions:</strong> Head Coach, Other Assistant Coaches, Players (especially positional group).<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 9, name: "Assistant Coach (Defense)", parentId: 7, department: "Coaching", description: `<strong>Role:</strong> Assistant Coach (e.g., Defensive Coordinator)<br><br> <strong>Responsibilities:</strong> <ul> <li>Assists the Head Coach with specific areas of game planning (e.g., defense).</li> <li>Conducts drills and provides technical instruction during training sessions.</li> <li>Contributes to player development and performance evaluation.</li> <li>May lead specific positional groups.</li> </ul> <strong>Key Interactions:</strong> Head Coach, Other Assistant Coaches, Players (especially positional group).<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 10, name: "Specialist Coach (e.g., Goalkeeping)", parentId: 7, department: "Coaching", description: `<strong>Role:</strong> Specialist Coach (e.g., Goalkeeping, Set Pieces, Strength & Conditioning)<br><br> <strong>Responsibilities:</strong> <ul> <li>Provides highly specialized technical and tactical instruction for specific skills or player positions.</li> <li>Designs and implements tailored training programs.</li> <li>Often works individually or with small groups of players.</li> </ul> <strong>Key Interactions:</strong> Head Coach, Assistant Coaches, Relevant Players.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 11, name: "Head of Performance Analysis", parentId: 7, department: "Performance Analysis", description: `<strong>Role:</strong> Head of Performance Analysis<br><br> <strong>Responsibilities:</strong> <ul> <li>Leads the performance analysis department.</li> <li>Establishes workflows for data collection, analysis, and reporting.</li> <li>Ensures analytical insights are effectively communicated to coaching staff and players.</li> <li>Manages analysis tools and technologies.</li> <li>Oversees pre-match opposition analysis and post-match team review.</li> </ul> <strong>Key Interactions:</strong> Head Coach, Assistant Coaches, GM, Analysts, Data Scientists.<br> <span class="text-xs italic text-gray-500">[cite: 216-218, 315]</span>` },
-            { id: 12, name: "Performance Analyst (Tactical)", parentId: 11, department: "Performance Analysis", description: `<strong>Role:</strong> Performance Analyst (Tactical Focus)<br><br> <strong>Responsibilities:</strong> <ul> <li>Analyzes video footage of team training and matches to assess tactical execution.</li> <li>Scouts upcoming opponents, identifying tactical patterns, strengths, and weaknesses.</li> <li>Creates detailed reports and video packages for coaches.</li> <li>May provide live analysis support during matches.</li> </ul> <strong>Key Interactions:</strong> Head of Performance Analysis, Coaches, Video Analysts.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 13, name: "Data Scientist", parentId: 11, department: "Performance Analysis", description: `<strong>Role:</strong> Data Scientist<br><br> <strong>Responsibilities:</strong> <ul> <li>Applies advanced statistical methods, machine learning, and data modeling techniques to performance and tracking data.</li> <li>Develops predictive models for player performance or injury risk.</li> <li>Identifies deeper trends and insights not apparent through basic analysis.</li> <li>Manages large datasets and data infrastructure.</li> </ul> <strong>Key Interactions:</strong> Head of Performance Analysis, Performance Analysts, Sports Scientists.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 14, name: "Video Analyst", parentId: 11, department: "Performance Analysis", description: `<strong>Role:</strong> Video Analyst<br><br> <strong>Responsibilities:</strong> <ul> <li>Films training sessions and matches from various angles.</li> <li>Codes (tags) key events and actions within the video footage.</li> <li>Manages the video database and ensures accessibility for coaches and analysts.</li> <li>Edits and produces video clips and presentations based on analyst/coach requests.</li> </ul> <strong>Key Interactions:</strong> Head of Performance Analysis, Performance Analysts, Coaches.<br> <span class="text-xs italic text-gray-500"></span>` },
-             { id: 15, name: "Head of Medical & Sports Science", parentId: 7, department: "Medical & Sports Science", description: `<strong>Role:</strong> Head of Medical / Head of Sports Science / High Performance Manager<br><br> <strong>Responsibilities:</strong> <ul> <li>Oversees the entire medical and sports science provision for the team.</li> <li>Develops and implements strategies for injury prevention, rehabilitation, and performance optimization.</li> <li>Manages the medical and sports science staff (physicians, physios, scientists, etc.).</li> <li>Ensures integration of medical/science insights into the coaching process.</li> <li>Manages budgets and resources for the department.</li> </ul> <strong>Key Interactions:</strong> Head Coach, GM, Team Physician, Lead Physio, Lead Sports Scientist, Players.<br> <span class="text-xs italic text-gray-500">[cite: 236-238, 328]</span>` },
-            { id: 16, name: "Team Physician", parentId: 15, department: "Medical & Sports Science", description: `<strong>Role:</strong> Team Physician / Doctor<br><br> <strong>Responsibilities:</strong> <ul> <li>Provides primary medical care and diagnoses illnesses and injuries.</li> <li>Oversees treatment plans and return-to-play protocols.</li> <li>Makes final decisions on player availability from a medical standpoint.</li> <li>Manages player medical records and ensures compliance with health regulations.</li> </ul> <strong>Key Interactions:</strong> Head of Medical, Physiotherapists, Players, Head Coach.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 17, name: "Athletic Trainer / Physiotherapist", parentId: 15, department: "Medical & Sports Science", description: `<strong>Role:</strong> Athletic Trainer / Physiotherapist<br><br> <strong>Responsibilities:</strong> <ul> <li>Delivers hands-on treatment for injuries, including manual therapy and exercise prescription.</li> <li>Develops and supervises rehabilitation programs.</li> <li>Implements injury prevention strategies (e.g., screening, targeted exercises).</li> <li>Provides immediate care for injuries during training and matches.</li> </ul> <strong>Key Interactions:</strong> Head of Medical, Team Physician, Sports Scientists, Players, Coaches.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 18, name: "Sports Scientist", parentId: 15, department: "Medical & Sports Science", description: `<strong>Role:</strong> Sports Scientist (Physiology / Biomechanics Focus)<br><br> <strong>Responsibilities:</strong> <ul> <li>Monitors player physical load, fatigue, and recovery using technologies (GPS, heart rate monitors, etc.).</li> <li>Conducts fitness testing and assesses physical performance markers.</li> <li>Provides data-driven recommendations to coaches on training intensity and periodization.</li> <li>Researches and implements best practices in sports science.</li> </ul> <strong>Key Interactions:</strong> Head of Sports Science, Physiotherapists, Strength & Conditioning Coaches, Performance Analysts, Coaches, Players.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 19, name: "Sports Nutritionist / Dietitian", parentId: 15, department: "Medical & Sports Science", description: `<strong>Role:</strong> Sports Nutritionist / Dietitian<br><br> <strong>Responsibilities:</strong> <ul> <li>Develops individualized nutrition plans for players based on needs, goals, and training phase.</li> <li>Educates players on optimal dietary strategies for performance, recovery, and body composition.</li> <li>Advises on hydration protocols and appropriate supplement use.</li> <li>May oversee team meals and catering.</li> </ul> <strong>Key Interactions:</strong> Head of Medical/Science, Players, Team Physician, Chefs/Catering Staff.<br> <span class="text-xs italic text-gray-500"></span>` },
-            { id: 20, name: "Sports Psychologist", parentId: 15, department: "Medical & Sports Science", description: `<strong>Role:</strong> Sports Psychologist / Mental Skills Coach<br><br> <strong>Responsibilities:</strong> <ul> <li>Provides psychological support and counseling to players and staff.</li> <li>Teaches mental skills techniques (e.g., goal setting, imagery, focus control, stress management).</li> <li>Assists with team dynamics, communication, and leadership development.</li> <li>Supports players during injury rehabilitation or periods of poor performance.</li> </ul> <strong>Key Interactions:</strong> Head of Medical/Science, Players, Coaches, Team Physician.<br> <span class="text-xs italic text-gray-500"></span>` }
+            {
+                id: 1, name: "CEO / Team President", parentId: null, department: "Management",
+                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=CEO",
+                description: `
+                    <p><strong>Role:</strong> Chief Executive Officer (CEO) or Team President.</p>
+                    <p><strong>Core Focus:</strong> Sets the overall strategic direction and vision for the organization. Oversees all business operations, including finance, marketing, and administration, ensuring long-term sustainability and success. Represents the team in league matters and major stakeholder interactions.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Define and communicate the organization's overarching strategy and values.</li>
+                        <li>Lead all business operations, ensuring financial health and operational efficiency.</li>
+                        <li>Act as the primary representative in league discussions and with key external partners.</li>
+                        <li>Foster a culture of excellence and accountability across all departments.</li>
+                        <li>Ultimately responsible for the organization's public image and financial performance.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Board of Directors/Owners, General Manager, Heads of Departments (Finance, Marketing, Operations, HR).
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 6, Goals Analysis various.</p>`
+            },
+            {
+                id: 2, name: "General Manager / Sporting Director", parentId: 1, department: "Management",
+                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=GM",
+                description: `
+                    <p><strong>Role:</strong> General Manager (GM) or Sporting Director.</p>
+                    <p><strong>Core Focus:</strong> Manages all aspects of the team's roster and athletic strategy. Accountable for the team's competitive success and long-term athletic development pipeline.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Oversee player acquisitions, trades, and contract negotiations.</li>
+                        <li>Hire and manage the Head Coach and often heads of performance/medical departments.</li>
+                        <li>Direct scouting departments (professional and amateur) for talent identification.</li>
+                        <li>Develop and implement the long-term athletic strategy in alignment with organizational goals.</li>
+                        <li>Manage the player salary cap and budget for sporting operations.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> CEO/President, Head Coach, Scouting Department, Player Agents, Medical/Performance Heads, Finance Manager.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 6, Goals Analysis (On-Field Perf., Player Dev.).</p>`
+            },
+            {
+                id: 3, name: "Operations Manager / Athletic Director", parentId: 1, department: "Management",
+                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=Ops",
+                description: `
+                    <p><strong>Role:</strong> Operations Manager or Athletic Director.</p>
+                    <p><strong>Core Focus:</strong> Ensures the smooth and efficient running of all team logistics and operational aspects, allowing coaching and performance staff to focus on athletes.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Manage team logistics: travel, accommodation, scheduling, and event coordination.</li>
+                        <li>Oversee facility management (training grounds, stadium operations).</li>
+                        <li>Manage equipment procurement, maintenance, and inventory.</li>
+                        <li>Ensure compliance with league regulations regarding operations.</li>
+                        <li>Coordinate with various departments to support their operational needs.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> CEO/President, GM, Head Coach, Travel Coordinators, Facility Staff, Equipment Managers, External Vendors.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 6.</p>`
+            },
+            {
+                id: 4, name: "Finance Manager / CFO", parentId: 1, department: "Management",
+                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=CFO",
+                description: `
+                    <p><strong>Role:</strong> Finance Manager or Chief Financial Officer (CFO).</p>
+                    <p><strong>Core Focus:</strong> Manages the team's financial resources, ensuring financial stability, compliance, and strategic alignment with organizational goals.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Develop and manage the organization's budget and financial planning.</li>
+                        <li>Oversee all financial reporting, accounting, payroll, and cash flow.</li>
+                        <li>Manage financial risk and ensure compliance with financial regulations.</li>
+                        <li>Analyze financial performance and provide strategic financial advice to leadership.</li>
+                        <li>Negotiate and manage sponsorship agreements from a financial perspective.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> CEO/President, GM (for player budget), Department Heads, Auditors, Banks.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 6, Goals Analysis (Financial Stability).</p>`
+            },
+            {
+                id: 5, name: "Marketing / PR Manager", parentId: 1, department: "Management",
+                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=Mktg",
+                description: `
+                    <p><strong>Role:</strong> Marketing and Public Relations (PR) Manager.</p>
+                    <p><strong>Core Focus:</strong> Builds and maintains the team's brand, engages with fans, and manages public image to attract fans, sponsors, and talent.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Develop and execute marketing strategies to build brand awareness and fan loyalty.</li>
+                        <li>Manage public relations, media interactions, and all team communications.</li>
+                        <li>Oversee social media presence, website content, and advertising campaigns.</li>
+                        <li>Manage sponsorship activation and relationships.</li>
+                        <li>Organize fan engagement events and initiatives.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> CEO/President, GM, Players (for appearances), Media Outlets, Sponsors, Fan Groups.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 6, Goals Analysis (Brand Building).</p>`
+            },
+            {
+                id: 6, name: "Human Resources Manager", parentId: 1, department: "Management",
+                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=HR",
+                description: `
+                    <p><strong>Role:</strong> Human Resources (HR) Manager.</p>
+                    <p><strong>Core Focus:</strong> Manages all personnel-related functions for non-athletic staff, fostering a positive and productive work environment and ensuring compliance with labor laws.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Manage recruitment, hiring, and onboarding for administrative and support staff.</li>
+                        <li>Oversee employee relations, benefits administration, and performance management.</li>
+                        <li>Ensure compliance with labor laws and employment regulations.</li>
+                        <li>Support organizational development and workplace culture initiatives.</li>
+                        <li>May assist with player liaison activities and off-field support.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> CEO/President, Department Heads, All Staff, Legal Counsel.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 6.</p>`
+            },
+            {
+                id: 7, name: "Head Coach", parentId: 2, department: "Coaching",
+                imageUrl: "https://placehold.co/128x128/10B981/FFFFFF?text=Coach",
+                description: `
+                    <p><strong>Role:</strong> Head Coach.</p>
+                    <p><strong>Core Focus:</strong> Leads all on-field activities, develops game strategies and training methodologies, and motivates players to achieve peak performance and team success.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Direct the entire coaching staff and all on-field player activities.</li>
+                        <li>Develop and implement game strategies, tactical plans, and training programs.</li>
+                        <li>Make key in-game decisions and player selections/substitutions.</li>
+                        <li>Motivate players, foster team cohesion, and cultivate a winning culture.</li>
+                        <li>Collaborate closely with the GM on roster decisions and player development.</li>
+                        <li>Analyze team and opponent performance with the analysis department.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> General Manager, Assistant Coaches, Specialist Coaches, Performance Analysts, Medical Staff, Players.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 3, Goals Analysis (On-Field Perf., Coaching Phil.).</p>`
+            },
+            {
+                id: 8, name: "Assistant Coach (Offense)", parentId: 7, department: "Coaching",
+                imageUrl: "https://placehold.co/128x128/10B981/FFFFFF?text=Asst.C",
+                description: `
+                    <p><strong>Role:</strong> Assistant Coach (e.g., Offensive Coordinator).</p>
+                    <p><strong>Core Focus:</strong> Assists the Head Coach with specific areas of game planning (e.g., offense), conducts drills, and contributes to player development within their specialized area.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Design and implement offensive strategies and plays.</li>
+                        <li>Conduct drills and provide technical instruction during training sessions.</li>
+                        <li>Contribute to player development and performance evaluation, particularly for offensive players.</li>
+                        <li>Analyze opponent defenses and prepare offensive game plans.</li>
+                        <li>May lead specific positional groups (e.g., quarterbacks, receivers).</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head Coach, Other Assistant Coaches, Players (especially offensive unit).
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 3.</p>`
+            },
+            {
+                id: 9, name: "Assistant Coach (Defense)", parentId: 7, department: "Coaching",
+                imageUrl: "https://placehold.co/128x128/10B981/FFFFFF?text=Asst.C",
+                description: `
+                    <p><strong>Role:</strong> Assistant Coach (e.g., Defensive Coordinator).</p>
+                    <p><strong>Core Focus:</strong> Assists the Head Coach with specific areas of game planning (e.g., defense), conducts drills, and contributes to player development within their specialized area.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Design and implement defensive strategies and schemes.</li>
+                        <li>Conduct drills and provide technical instruction during training sessions.</li>
+                        <li>Contribute to player development and performance evaluation, particularly for defensive players.</li>
+                        <li>Analyze opponent offenses and prepare defensive game plans.</li>
+                        <li>May lead specific positional groups (e.g., defensive line, linebackers).</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head Coach, Other Assistant Coaches, Players (especially defensive unit).
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 3.</p>`
+            },
+            {
+                id: 10, name: "Specialist Coach (e.g., Goalkeeping)", parentId: 7, department: "Coaching",
+                imageUrl: "https://placehold.co/128x128/10B981/FFFFFF?text=Spec.C",
+                description: `
+                    <p><strong>Role:</strong> Specialist Coach (e.g., Goalkeeping, Set Pieces, Strength & Conditioning - if not separate dept).</p>
+                    <p><strong>Core Focus:</strong> Provides highly specialized technical and tactical instruction for specific skills or player positions, designing and implementing tailored training programs.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Deliver expert coaching in a specific area (e.g., goalkeeping techniques, set-piece execution).</li>
+                        <li>Design and implement individualized training programs for relevant players.</li>
+                        <li>Work individually or with small groups to refine specific skills.</li>
+                        <li>Collaborate with Head Coach and other staff on integrating specialist training.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head Coach, Assistant Coaches, Relevant Players, Medical/Performance Staff.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 3.</p>`
+            },
+            {
+                id: 11, name: "Head of Performance Analysis", parentId: 7, department: "Performance Analysis",
+                imageUrl: "https://placehold.co/128x128/2563EB/FFFFFF?text=HeadPA",
+                description: `
+                    <p><strong>Role:</strong> Head of Performance Analysis.</p>
+                    <p><strong>Core Focus:</strong> Leads the performance analysis department, establishing workflows for data collection, analysis, and reporting to provide objective insights that inform coaching decisions and enhance player/team performance.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Lead and manage the performance analysis team and resources.</li>
+                        <li>Establish and oversee workflows for data collection (video, stats, physiological), analysis, and reporting.</li>
+                        <li>Ensure analytical insights are effectively communicated to coaching staff and players.</li>
+                        <li>Manage analysis tools, software, and technologies.</li>
+                        <li>Oversee pre-match opposition analysis and post-match team performance reviews.</li>
+                        <li>Drive innovation in data analysis methodologies within the team.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head Coach, Assistant Coaches, GM, Analysts, Data Scientists, Medical Staff.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 4, Goals Analysis (Perf. Analysis).</p>`
+            },
+            {
+                id: 12, name: "Performance Analyst (Tactical)", parentId: 11, department: "Performance Analysis",
+                imageUrl: "https://placehold.co/128x128/2563EB/FFFFFF?text=PA-Tac",
+                description: `
+                    <p><strong>Role:</strong> Performance Analyst (Tactical Focus).</p>
+                    <p><strong>Core Focus:</strong> Analyzes video footage and data to assess tactical execution, scout opponents, and provide detailed reports to coaches for game planning and player feedback.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Analyze video of team training and matches to assess tactical execution and decision-making.</li>
+                        <li>Scout upcoming opponents, identifying tactical patterns, strengths, and weaknesses.</li>
+                        <li>Create detailed reports, presentations, and video packages for coaches and players.</li>
+                        <li>May provide live analysis support during matches.</li>
+                        <li>Collaborate with data scientists on integrating advanced metrics into tactical analysis.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head of Performance Analysis, Coaches, Video Analysts, Data Scientists.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 4.</p>`
+            },
+            {
+                id: 13, name: "Data Scientist", parentId: 11, department: "Performance Analysis",
+                imageUrl: "https://placehold.co/128x128/2563EB/FFFFFF?text=DataSci",
+                description: `
+                    <p><strong>Role:</strong> Data Scientist.</p>
+                    <p><strong>Core Focus:</strong> Applies advanced statistical methods, machine learning, and data modeling techniques to performance, tracking, and medical data to identify deeper trends, develop predictive models, and provide complex insights.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Develop and apply statistical models and machine learning algorithms to sports data.</li>
+                        <li>Create predictive models for player performance, injury risk, or tactical outcomes.</li>
+                        <li>Identify complex patterns and insights not apparent through basic analysis.</li>
+                        <li>Manage and maintain large datasets and contribute to data infrastructure.</li>
+                        <li>Collaborate with analysts and coaches to translate complex findings into actionable insights.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head of Performance Analysis, Performance Analysts, Sports Scientists, Medical Staff.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 4.</p>`
+            },
+            {
+                id: 14, name: "Video Analyst", parentId: 11, department: "Performance Analysis",
+                imageUrl: "https://placehold.co/128x128/2563EB/FFFFFF?text=VidAna",
+                description: `
+                    <p><strong>Role:</strong> Video Analyst.</p>
+                    <p><strong>Core Focus:</strong> Films training and matches, codes (tags) key events, manages the video database, and produces video clips to support coaching and performance analysis.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Film training sessions and matches from various angles using appropriate equipment.</li>
+                        <li>Code (tag) key events, actions, and tactical information within video footage.</li>
+                        <li>Manage and maintain the team's video database, ensuring accessibility.</li>
+                        <li>Edit and produce video clips, highlights, and presentations based on analyst/coach requests.</li>
+                        <li>Support opponent scouting through video compilation and analysis.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head of Performance Analysis, Performance Analysts, Coaches.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 4.</p>`
+            },
+             {
+                id: 15, name: "Head of Medical & Sports Science", parentId: 7, department: "Medical & Sports Science",
+                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=HeadMed",
+                description: `
+                    <p><strong>Role:</strong> Head of Medical / Head of Sports Science / High Performance Manager.</p>
+                    <p><strong>Core Focus:</strong> Oversees all medical and sports science provisions, developing strategies for injury prevention, rehabilitation, and performance optimization through a multidisciplinary approach.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Lead and manage the medical and sports science staff (physicians, physios, scientists, etc.).</li>
+                        <li>Develop and implement evidence-based strategies for injury prevention and rehabilitation.</li>
+                        <li>Drive initiatives for athlete performance optimization through scientific principles.</li>
+                        <li>Ensure integration of medical/science insights into the coaching process.</li>
+                        <li>Manage budgets, resources, and ethical considerations for the department.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head Coach, GM, Team Physician, Lead Physio, Lead Sports Scientist, Players, Performance Analysts.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 5, Goals Analysis (Injury Prev.).</p>`
+            },
+            {
+                id: 16, name: "Team Physician", parentId: 15, department: "Medical & Sports Science",
+                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=Doctor",
+                description: `
+                    <p><strong>Role:</strong> Team Physician / Doctor.</p>
+                    <p><strong>Core Focus:</strong> Provides primary medical care, diagnoses illnesses/injuries, oversees treatment plans, and makes final decisions on player medical availability, prioritizing athlete health.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Conduct medical examinations and diagnose player illnesses and injuries.</li>
+                        <li>Develop and oversee treatment and return-to-play protocols.</li>
+                        <li>Make final medical decisions on player availability for training and competition.</li>
+                        <li>Manage player medical records and ensure compliance with health regulations.</li>
+                        <li>Provide medical expertise and counsel to players, coaches, and staff.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head of Medical, Physiotherapists, Players, Head Coach, Specialists (e.g., surgeons).
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 5.</p>`
+            },
+            {
+                id: 17, name: "Athletic Trainer / Physiotherapist", parentId: 15, department: "Medical & Sports Science",
+                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=Physio",
+                description: `
+                    <p><strong>Role:</strong> Athletic Trainer / Physiotherapist.</p>
+                    <p><strong>Core Focus:</strong> Delivers hands-on treatment for injuries, develops and supervises rehabilitation programs, and implements injury prevention strategies. Often the first responder to injuries.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Provide immediate care and assessment for injuries during training and matches.</li>
+                        <li>Deliver hands-on treatment, including manual therapy and therapeutic modalities.</li>
+                        <li>Develop, implement, and supervise individualized rehabilitation programs.</li>
+                        <li>Implement injury prevention strategies (screening, targeted exercises, taping/bracing).</li>
+                        <li>Educate athletes on injury management and prevention.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head of Medical, Team Physician, Sports Scientists, Players, Coaches.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 5.</p>`
+            },
+            {
+                id: 18, name: "Sports Scientist", parentId: 15, department: "Medical & Sports Science",
+                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=SportSci",
+                description: `
+                    <p><strong>Role:</strong> Sports Scientist (Physiology / Biomechanics Focus).</p>
+                    <p><strong>Core Focus:</strong> Monitors player physical load, fatigue, and recovery using technology. Conducts fitness testing and provides data-driven recommendations to optimize training and performance while minimizing injury risk.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Monitor player training load, fatigue, and recovery using GPS, heart rate monitors, etc.</li>
+                        <li>Conduct regular fitness testing and assess physical performance markers.</li>
+                        <li>Provide data-driven recommendations to coaches on training intensity, volume, and periodization.</li>
+                        <li>Research and implement best practices in sports science application.</li>
+                        <li>Analyze biomechanics to optimize movement efficiency and reduce injury risk.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head of Sports Science/Medical, Physiotherapists, Strength & Conditioning Coaches, Performance Analysts, Coaches, Players.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 5.</p>`
+            },
+            {
+                id: 19, name: "Sports Nutritionist / Dietitian", parentId: 15, department: "Medical & Sports Science",
+                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=Nutrition",
+                description: `
+                    <p><strong>Role:</strong> Sports Nutritionist / Dietitian.</p>
+                    <p><strong>Core Focus:</strong> Develops individualized nutrition plans to optimize performance, recovery, and body composition. Educates players on dietary strategies and supplement use.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Assess individual player nutritional needs and develop personalized meal plans.</li>
+                        <li>Educate players on optimal dietary strategies for performance, recovery, and health.</li>
+                        <li>Advise on hydration protocols and appropriate, safe supplement use.</li>
+                        <li>May oversee team meals, catering, and food provision during travel.</li>
+                        <li>Monitor body composition and adjust nutritional strategies accordingly.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head of Medical/Science, Players, Team Physician, Chefs/Catering Staff, Coaches.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 5.</p>`
+            },
+            {
+                id: 20, name: "Sports Psychologist", parentId: 15, department: "Medical & Sports Science",
+                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=Psych",
+                description: `
+                    <p><strong>Role:</strong> Sports Psychologist / Mental Skills Coach.</p>
+                    <p><strong>Core Focus:</strong> Provides psychological support and counseling, teaches mental skills techniques (e.g., goal setting, imagery, stress management) to enhance performance and well-being.</p>
+                    <strong>Responsibilities:</strong>
+                    <ul>
+                        <li>Provide individual and group psychological support and counseling.</li>
+                        <li>Teach mental skills (goal setting, visualization, focus, resilience, stress management).</li>
+                        <li>Assist with team dynamics, communication, and leadership development.</li>
+                        <li>Support players during injury rehabilitation or periods of poor performance.</li>
+                        <li>Consult with coaching staff on psychological aspects of performance.</li>
+                    </ul>
+                    <strong>Key Interactions:</strong> Head of Medical/Science, Players, Coaches, Team Physician.
+                    <p class="text-xs italic text-gray-500 mt-2">Source: Org Map Sec. 5.</p>`
+            }
         ];
 
-        const activeBtnBg = 'var(--light-accent1)';
-        const activeBtnHoverBg = 'var(--light-accent3)';
-        const activeBtnRing = 'var(--light-accent1)';
-        const activeBtnText = 'var(--light-bg)';
+        // --- D3.js Org Chart Logic ---
+        let d3Chart = null;
+        let d3Zoom = null;
 
-        const inactiveBtnBg = 'transparent';
-        const inactiveBtnHoverBg = 'var(--light-bg-secondary)';
-        const inactiveBtnRing = 'var(--light-accent6)';
-        const inactiveBtnText = 'var(--light-text-secondary)';
-        const inactiveBtnBorder = 'var(--light-accent6)';
-
-        google.charts.load('current', {packages:['orgchart']});
-        google.charts.setOnLoadCallback(drawChart);
-        let googleChart = null;
-
-        function getBadgeClass(department) {
-            switch (department) {
-                case 'Coaching': return 'badge-coaching';
-                case 'Medical & Sports Science': return 'badge-medical';
-                case 'Management': return 'badge-management';
-                case 'Performance Analysis': return 'badge-performance';
-                default: return 'badge-default';
+        function drawD3Chart() {
+            const chartContainer = document.getElementById('d3-chart-container');
+            if (!chartContainer) {
+                console.error("D3 chart container not found!");
+                return;
             }
-        }
+            chartContainer.innerHTML = ''; // Clear loader or previous chart
 
-        function drawChart() {
-            const chartDiv = document.getElementById('chart_div');
-            if (!chartDiv) return;
+            const containerRect = chartContainer.getBoundingClientRect();
+            const effectiveWidth = containerRect.width > 0 ? containerRect.width : 800;
+            const effectiveHeight = containerRect.height > 0 ? containerRect.height : 650;
 
+            const margin = { top: 40, right: 20, bottom: 40, left: 20 };
+            const width = effectiveWidth - margin.left - margin.right;
+            const height = effectiveHeight - margin.top - margin.bottom;
+
+            // Node dimensions & spacing
+            const nodeWidth = 170;
+            const nodeHeight = 70; 
+            const departmentBadgeHeight = 20; 
+            const nodeVerticalSpacing = nodeHeight + 50;
+            const nodeHorizontalSpacing = nodeWidth + 30;
+
+            const svg = d3.select(chartContainer)
+                .append("svg")
+                .attr("width", effectiveWidth)
+                .attr("height", effectiveHeight)
+                .attr("viewBox", [0, 0, effectiveWidth, effectiveHeight]);
+
+            const g = svg.append("g");
+
+            d3Zoom = d3.zoom()
+                .scaleExtent([0.15, 3])
+                .on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                });
+            svg.call(d3Zoom);
+
+            const rootNodeId = orgData.find(d => d.parentId === null)?.id;
+            if (rootNodeId === undefined) {
+                chartContainer.innerHTML = '<p class="text-red-500 p-4 text-center">Error: No root node found.</p>';
+                return;
+            }
+
+            const stratify = d3.stratify().id(d => d.id).parentId(d => d.parentId);
+            let root;
             try {
-                const data = new google.visualization.DataTable();
-                data.addColumn('string', 'Name');
-                data.addColumn('string', 'Manager');
-                data.addColumn('string', 'ToolTip');
+                root = stratify(orgData);
+            } catch (e) {
+                console.error("Error creating hierarchy:", e);
+                chartContainer.innerHTML = '<p class="text-red-500 p-4 text-center">Error building chart hierarchy.</p>';
+                return;
+            }
 
-                const chartData = orgData.map(role => {
-                    const parentRole = orgData.find(p => p.id === role.parentId);
-                    const parentName = parentRole ? parentRole.name : '';
-                    const badgeClass = getBadgeClass(role.department);
-                    const badgeHTML = role.department ? `<span class="dept-badge ${badgeClass}">${role.department}</span>` : '';
-                    const displayHTML = `<div class="org-node-name">${role.name}</div>${badgeHTML}`;
-                    return [{ v: role.name, f: displayHTML }, parentName, `Department: ${role.department || 'N/A'}`];
+            const treeLayout = d3.tree().nodeSize([nodeHorizontalSpacing, nodeVerticalSpacing]);
+            treeLayout(root);
+
+            const descendants = root.descendants();
+            const xCoords = descendants.map(d => d.x);
+            const yCoords = descendants.map(d => d.y);
+            const minX = d3.min(xCoords) - nodeWidth / 2;
+            const maxX = d3.max(xCoords) + nodeWidth / 2;
+            const minY = d3.min(yCoords) - nodeHeight / 2;
+            const maxY = d3.max(yCoords) + nodeHeight / 2;
+
+            const treeActualWidth = maxX - minX;
+            const treeActualHeight = maxY - minY;
+
+            const initialScale = Math.min(width / treeActualWidth, height / treeActualHeight, 1) * 0.98;
+            const initialX = (effectiveWidth / 2) - ((minX + maxX) / 2 * initialScale);
+            const initialY = (effectiveHeight / 2) - ((minY + maxY) / 2 * initialScale);
+
+            svg.call(d3Zoom.transform, d3.zoomIdentity.translate(initialX, initialY).scale(initialScale));
+
+            g.selectAll(".d3-link")
+                .data(root.links())
+                .join("path")
+                .attr("class", "d3-link")
+                .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+
+            const nodes = g.selectAll(".d3-node")
+                .data(descendants)
+                .join("g")
+                .attr("class", "d3-node group cursor-pointer")
+                .attr("transform", d => `translate(${d.x - nodeWidth / 2},${d.y - nodeHeight / 2})`)
+                .on("click", (event, d) => {
+                    showModal(d.data);
                 });
 
-                data.addRows(chartData);
+            nodes.append("rect")
+                .attr("class", "node-rect")
+                .attr("width", nodeWidth)
+                .attr("height", nodeHeight)
+                .attr("fill", "#FFFFFF")
+                .attr("stroke", d => {
+                    const dept = d.data.department;
+                    if (dept === "Management") return "var(--light-accent3)";
+                    if (dept === "Coaching") return "var(--light-accent2)";
+                    if (dept === "Performance Analysis") return "var(--light-accent1)";
+                    if (dept === "Medical & Sports Science") return "var(--light-accent4)";
+                    return "var(--light-border)";
+                });
+            
+            const textBlockWidth = nodeWidth - 20; 
+            const spaceForText = nodeHeight - departmentBadgeHeight - 10 - 7; 
+            const textY = 10 + spaceForText / 2; 
 
-                if (googleChart) {
-                    googleChart.clearChart();
-                }
-                googleChart = new google.visualization.OrgChart(chartDiv);
+            nodes.append("text")
+                .attr("class", "node-name")
+                .attr("x", nodeWidth / 2) 
+                .attr("y", textY) 
+                .attr("text-anchor", "middle") 
+                .text(d => d.data.name)
+                .call(wrapTextD3, textBlockWidth, 2, 14); 
 
-                google.visualization.events.addListener(googleChart, 'select', selectHandler);
+            const badgeY = nodeHeight - departmentBadgeHeight - 7; 
+            nodes.append("rect")
+                .attr("class", d => `badge-fill-${getBadgeClass(d.data.department, true)}`)
+                .attr("x", 7)
+                .attr("y", badgeY)
+                .attr("width", nodeWidth - 14)
+                .attr("height", departmentBadgeHeight)
+                .attr("rx", 4).attr("ry", 4);
 
-                function selectHandler() {
-                    if (!googleChart) return;
-                    const selection = googleChart.getSelection();
-                    if (selection.length > 0) {
-                        const selectedRowIndex = selection[0].row;
-                        const roleName = data.getValue(selectedRowIndex, 0);
-                        const role = orgData.find(r => r.name === roleName);
-                        if (role) showModal(role);
-                    }
-                }
+            nodes.append("text")
+                .attr("class", "node-department-text")
+                .attr("x", nodeWidth / 2)
+                .attr("y", badgeY + departmentBadgeHeight / 2) 
+                .attr("text-anchor", "middle")
+                .text(d => d.data.department || "N/A");
 
-                googleChart.draw(data, {
-                    allowHtml: true,
-                    allowCollapse: true,
-                    nodeClass: 'google-visualization-orgchart-node',
-                    selectedNodeClass: 'google-visualization-orgchart-node-selected',
-                    compactRows: true,
-                    size: 'small'
-                 });
-
-                 const nodes = chartDiv.querySelectorAll('.google-visualization-orgchart-node');
-                 nodes.forEach(node => {
-                     node.setAttribute('tabindex', '0');
-                     node.addEventListener('keydown', (e) => {
-                         if (e.key === 'Enter' || e.key === ' ') {
-                             const roleNameElement = node.querySelector('.org-node-name');
-                             if (roleNameElement) {
-                                 const roleName = roleNameElement.textContent;
-                                  const role = orgData.find(r => r.name === roleName);
-                                  if (role) showModal(role);
-                             }
-                         }
-                     });
-                 });
-            } catch (e) {
-                console.error("Error drawing Google Chart:", e);
-                chartDiv.innerHTML = '<p class="text-red-500">Error loading chart.</p>';
-            }
+            d3Chart = { svg, g, root, nodes, links: g.selectAll(".d3-link") };
         }
 
-        const tableBody = document.querySelector('#roles-table tbody');
+        function wrapTextD3(textElements, width, maxLines = 2, explicitLineHeight = 14) {
+            textElements.each(function() {
+                let text = d3.select(this),
+                    words = text.text().split(/\s+/).reverse(),
+                    word,
+                    line = [],
+                    lineNumber = 0,
+                    x = text.attr("x"), 
+                    y = parseFloat(text.attr("y")),
+                    tspan = text.text(null).append("tspan").attr("x", x).attr("y", y);
 
+                let originalTextContent = textElements.text(); 
+                let estimatedLines = 1;
+                let tempSvgForMeasurement = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
+                let tempMeasurementTextNode = tempSvgForMeasurement.append("text")
+                                            .attr("class", text.attr("class")) 
+                                            .style("font-size", text.style("font-size")) 
+                                            .style("font-weight", text.style("font-weight"));
+                
+                let currentLineForEstimation = "";
+                let tempWordsForEstimation = originalTextContent.split(/\s+/);
+
+                for(let k=0; k < tempWordsForEstimation.length; k++){ 
+                    let testLine = currentLineForEstimation ? currentLineForEstimation + " " + tempWordsForEstimation[k] : tempWordsForEstimation[k];
+                    tempMeasurementTextNode.text(testLine);
+                    if(tempMeasurementTextNode.node() && tempMeasurementTextNode.node().getComputedTextLength() > width && currentLineForEstimation){
+                        estimatedLines++;
+                        currentLineForEstimation = tempWordsForEstimation[k];
+                    } else {
+                        currentLineForEstimation = testLine;
+                    }
+                }
+                estimatedLines = Math.min(maxLines, estimatedLines);
+                tempSvgForMeasurement.remove();
+
+                let yInitialAdjust = 0;
+                if (estimatedLines === 1 && maxLines > 1) { 
+                    yInitialAdjust = explicitLineHeight / 3.5; 
+                } else if (estimatedLines > 1) { 
+                     yInitialAdjust = - ( (estimatedLines -1) * explicitLineHeight) / 2 + (explicitLineHeight / 3.5) ; 
+                }
+                tspan.attr("y", y + yInitialAdjust);
+
+
+                while (word = words.pop()) {
+                    line.push(word);
+                    tspan.text(line.join(" "));
+                    if (tspan.node().getComputedTextLength() > width && line.length > 1) {
+                        line.pop();
+                        tspan.text(line.join(" "));
+                        if (lineNumber < maxLines - 1) {
+                            lineNumber++;
+                            line = [word];
+                            tspan = text.append("tspan").attr("x", x).attr("dy", explicitLineHeight + "px").text(word);
+                        } else {
+                            let currentText = tspan.text();
+                            while (tspan.node().getComputedTextLength() > width - 10 && currentText.length > 3) { 
+                                currentText = currentText.slice(0, -1);
+                            }
+                            tspan.text(currentText.trim() + (currentText.endsWith("...") || words.length === 0 ? "" : "..."));
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Table View Population ---
+        const tableBody = document.querySelector('#roles-table tbody');
         function populateTable() {
             if (!tableBody) return;
             tableBody.innerHTML = '';
@@ -282,55 +830,67 @@
                 const parentRole = orgData.find(p => p.id === role.parentId);
                 const parentName = parentRole ? parentRole.name : 'N/A';
                 const row = document.createElement('tr');
-                row.classList.add('hover:bg-gray-100', 'clickable-row');
-                row.setAttribute('data-role-id', role.id);
-
-                const badgeClass = getBadgeClass(role.department);
-                const badgeHTML = role.department ? `<span class="dept-badge ${badgeClass}">${role.department}</span>` : 'N/A';
-
+                row.classList.add('hover:bg-gray-50', 'clickable-row', 'transition-colors', 'duration-150');
+                row.setAttribute('data-role-id', role.id.toString());
+                row.setAttribute('tabindex', '0');
+                const badgeHTML = role.department ? `<span class="dept-badge ${getBadgeClass(role.department)}">${role.department}</span>` : '<span class="text-gray-400">N/A</span>';
                 row.innerHTML = `
-                    <td class="px-2 py-1 text-xs sm:px-6 sm:py-4 sm:text-sm font-medium text-gray-900">${role.name}</td>
-                    <td class="px-2 py-1 text-xs sm:px-6 sm:py-4 sm:text-sm text-gray-500">${parentName}</td>
-                    <td class="px-2 py-1 text-xs sm:px-6 sm:py-4 sm:text-sm text-gray-500">${badgeHTML}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium text-gray-800 whitespace-nowrap">${role.name}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-500 whitespace-nowrap">${parentName}</td>
+                    <td class="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-500">${badgeHTML}</td>
                 `;
                 row.addEventListener('click', () => { showModal(role); });
+                row.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showModal(role); }
+                });
                 tableBody.appendChild(row);
             });
         }
 
+        function getBadgeClass(department, forD3Fill = false) {
+            const baseClass = String(department).toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
+            if (forD3Fill) {
+                switch (baseClass) {
+                    case 'coaching': return 'coaching';
+                    case 'medical-sports-science': return 'medical';
+                    case 'management': return 'management';
+                    case 'performance-analysis': return 'performance';
+                    default: return 'default';
+                }
+            } else {
+                 switch (baseClass) {
+                    case 'coaching': return 'badge-coaching';
+                    case 'medical-sports-science': return 'badge-medical';
+                    case 'management': return 'badge-management';
+                    case 'performance-analysis': return 'badge-performance';
+                    default: return 'badge-default';
+                }
+            }
+        }
+
+        // --- View Switching Logic ---
         const chartView = document.getElementById('chart-view');
         const tableView = document.getElementById('table-view');
         const showChartBtn = document.getElementById('show-chart-btn');
         const showTableBtn = document.getElementById('show-table-btn');
+        let d3ChartDrawnOnce = false;
 
-        function setActiveButton(activeBtn, inactiveBtn) {
+        function setActiveButtonStyles(activeBtn, inactiveBtn) {
             if (!activeBtn || !inactiveBtn) return;
-
-            activeBtn.style.backgroundColor = activeBtnBg;
-            activeBtn.style.color = activeBtnText;
-            activeBtn.style.borderColor = 'transparent';
-            activeBtn.classList.remove('border');
-            activeBtn.onmouseover = () => activeBtn.style.backgroundColor = activeBtnHoverBg;
-            activeBtn.onmouseout = () => activeBtn.style.backgroundColor = activeBtnBg;
-            activeBtn.style.setProperty('--tw-ring-color', activeBtnRing);
-
-            inactiveBtn.style.backgroundColor = inactiveBtnBg;
-            inactiveBtn.style.color = inactiveBtnText;
-            inactiveBtn.style.borderColor = inactiveBtnBorder;
-            inactiveBtn.classList.add('border');
-            inactiveBtn.onmouseover = () => inactiveBtn.style.backgroundColor = inactiveBtnHoverBg;
-            inactiveBtn.onmouseout = () => inactiveBtn.style.backgroundColor = inactiveBtnBg;
-            inactiveBtn.style.setProperty('--tw-ring-color', inactiveBtnRing);
+            activeBtn.classList.remove('inactive'); activeBtn.classList.add('active');
+            inactiveBtn.classList.remove('active'); inactiveBtn.classList.add('inactive');
         }
 
         if (showChartBtn) {
             showChartBtn.addEventListener('click', () => {
                 if (chartView && tableView) {
-                    chartView.classList.remove('hidden-view');
-                    chartView.classList.add('visible-view');
-                    tableView.classList.add('hidden-view');
-                    tableView.classList.remove('visible-view');
-                    setActiveButton(showChartBtn, showTableBtn);
+                    chartView.classList.remove('hidden-view'); chartView.classList.add('visible-view');
+                    tableView.classList.add('hidden-view'); tableView.classList.remove('visible-view');
+                    setActiveButtonStyles(showChartBtn, showTableBtn);
+                    if (!d3ChartDrawnOnce) {
+                        setTimeout(drawD3Chart, 50);
+                        d3ChartDrawnOnce = true;
+                    }
                 }
             });
         }
@@ -338,62 +898,92 @@
        if (showTableBtn) {
             showTableBtn.addEventListener('click', () => {
                  if (chartView && tableView) {
-                    tableView.classList.remove('hidden-view');
-                    tableView.classList.add('visible-view');
-                    chartView.classList.add('hidden-view');
-                    chartView.classList.remove('visible-view');
-                    setActiveButton(showTableBtn, showChartBtn);
+                    tableView.classList.remove('hidden-view'); tableView.classList.add('visible-view');
+                    chartView.classList.add('hidden-view'); chartView.classList.remove('visible-view');
+                    setActiveButtonStyles(showTableBtn, showChartBtn);
                  }
             });
         }
 
+        // --- Modal Logic ---
         const modal = document.getElementById('role-modal');
         const modalTitle = document.getElementById('modal-title');
+        const modalImage = document.getElementById('modal-image');
         const modalDescription = document.getElementById('modal-description');
         const closeModalBtn = document.getElementById('close-modal-btn');
+        const modalBodyContent = document.getElementById('modal-body-content');
+        let previouslyFocusedElement = null;
 
-        function showModal(role) {
-            if (!role || !modal || !modalTitle || !modalDescription) return;
-            modalTitle.textContent = role.name;
-            modalDescription.innerHTML = role.description || 'No description available.';
-            modal.classList.remove('modal-hidden');
-            modal.classList.add('modal-visible');
-            modalDescription.scrollTop = 0;
+        function showModal(roleData) {
+            if (!roleData || !modal || !modalTitle || !modalDescription || !modalImage || !modalBodyContent) return;
+            previouslyFocusedElement = document.activeElement;
+            modalTitle.textContent = roleData.name;
+            modalImage.src = roleData.imageUrl || 'https://placehold.co/128x128/EFF6FF/1E3A8A?text=Role';
+            modalImage.alt = roleData.name;
+            modalDescription.innerHTML = roleData.description || '<p>No detailed description available for this role.</p>';
+            modal.classList.remove('modal-hidden'); modal.classList.add('modal-visible');
+            modalBodyContent.scrollTop = 0;
+            closeModalBtn.focus();
         }
 
         function hideModal() {
-             if (!modal) return;
-            modal.classList.add('modal-hidden');
-            modal.classList.remove('modal-visible');
+            if (!modal) return;
+            modal.classList.add('modal-hidden'); 
+            modal.classList.remove('modal-visible'); // Corrected this line
+            if (previouslyFocusedElement) previouslyFocusedElement.focus();
         }
 
         if(closeModalBtn) closeModalBtn.addEventListener('click', hideModal);
-        if(modal) modal.addEventListener('click', (event) => { if (event.target === modal) hideModal(); });
-        document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal?.classList.contains('modal-visible')) hideModal(); });
+        if(modal) {
+            modal.addEventListener('click', (event) => { if (event.target === modal) hideModal(); });
+        }
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal?.classList.contains('modal-visible')) hideModal();
+            if (event.key === 'Tab' && modal?.classList.contains('modal-visible')) {
+                const focusableElements = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+                if (focusableElements.length === 0) return;
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+                if (event.shiftKey) {
+                    if (document.activeElement === firstElement) { lastElement.focus(); event.preventDefault(); }
+                } else {
+                    if (document.activeElement === lastElement) { firstElement.focus(); event.preventDefault(); }
+                }
+            }
+        });
 
-
+        // --- App Initialization ---
         function initializeApp() {
             populateTable();
-
             const isMobile = window.innerWidth < 768;
-            if (isMobile) {
-                tableView?.classList.remove('hidden-view');
-                tableView?.classList.add('visible-view');
-                chartView?.classList.add('hidden-view');
-                chartView?.classList.remove('visible-view');
-                setActiveButton(showTableBtn, showChartBtn);
-            } else {
-                chartView?.classList.remove('hidden-view');
-                chartView?.classList.add('visible-view');
-                tableView?.classList.add('hidden-view');
-                tableView?.classList.remove('visible-view');
-                setActiveButton(showChartBtn, showTableBtn);
+            if (isMobile && tableView && chartView && showTableBtn && showChartBtn) {
+                tableView.classList.remove('hidden-view'); tableView.classList.add('visible-view');
+                chartView.classList.add('hidden-view'); chartView.classList.remove('visible-view');
+                setActiveButtonStyles(showTableBtn, showChartBtn);
+            } else if (chartView && tableView && showChartBtn && showChartBtn) {
+                chartView.classList.remove('hidden-view'); chartView.classList.add('visible-view');
+                tableView.classList.add('hidden-view'); tableView.classList.remove('visible-view');
+                setActiveButtonStyles(showChartBtn, showTableBtn);
+                setTimeout(drawD3Chart, 50);
+                d3ChartDrawnOnce = true;
             }
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
 
-    </script>
+        // Handle window resize for D3 chart
+        let resizeD3Timeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeD3Timeout);
+            resizeD3Timeout = setTimeout(() => {
+                if (d3ChartDrawnOnce && chartView.classList.contains('visible-view')) {
+                    const chartContainer = document.getElementById('d3-chart-container');
+                    chartContainer.innerHTML = '<div class="chart-loading-container"><div class="loader"></div><p>Adjusting Chart...</p></div>';
+                    drawD3Chart();
+                }
+            }, 300);
+        });
 
+    </script>
 </body>
 </html>
