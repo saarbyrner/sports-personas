@@ -303,7 +303,7 @@
             </div>
             <div id="modal-body-content" class="p-4 sm:p-5 flex flex-col md:flex-row gap-4">
                 <div class="md:w-1/3 flex-shrink-0 text-center">
-                    <img id="modal-image" src="https://placehold.co/128x128/EFF6FF/1E3A8A?text=Role" alt="Role Image" class="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-3 border-2 border-[--light-accent1] shadow-md object-cover">
+                    <img id="modal-image" src="https://placehold.co/128x128/121212/FFFFFF?text=Role" alt="Role Image" class="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-3 border-2 border-[--light-accent1] shadow-md object-cover">
                 </div>
                 <div id="modal-description" class="md:w-2/3 text-sm text-[--light-text-primary]">
                     </div>
@@ -315,7 +315,7 @@
        const orgData = [
             {
                 id: 1, name: "CEO / Team President", parentId: null, department: "Management",
-                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=CEO",
+                imageUrl: "https://placehold.co/128x128/FF7300/FFFFFF?text=CEO", /* Updated to management orange */
                 description: `
                     <p><strong>Role:</strong> Chief Executive Officer (CEO) or Team President.</p>
                     <p><strong>Core Focus:</strong> Sets the overall strategic direction and vision for the organization. Oversees all business operations, including finance, marketing, and administration, ensuring long-term sustainability and success. Represents the team in league matters and major stakeholder interactions.</p>
@@ -332,7 +332,7 @@
             },
             {
                 id: 2, name: "General Manager / Sporting Director", parentId: 1, department: "Management",
-                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=GM",
+                imageUrl: "https://placehold.co/128x128/FF7300/FFFFFF?text=GM", /* Updated to management orange */
                 description: `
                     <p><strong>Role:</strong> General Manager (GM) or Sporting Director.</p>
                     <p><strong>Core Focus:</strong> Manages all aspects of the team's roster and athletic strategy. Accountable for the team's competitive success and long-term athletic development pipeline.</p>
@@ -349,7 +349,7 @@
             },
             {
                 id: 3, name: "Operations Manager / Athletic Director", parentId: 1, department: "Management",
-                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=Ops",
+                imageUrl: "https://placehold.co/128x128/FF7300/FFFFFF?text=Ops", /* Updated to management orange */
                 description: `
                     <p><strong>Role:</strong> Operations Manager or Athletic Director.</p>
                     <p><strong>Core Focus:</strong> Ensures the smooth and efficient running of all team logistics and operational aspects, allowing coaching and performance staff to focus on athletes.</p>
@@ -366,7 +366,7 @@
             },
             {
                 id: 4, name: "Finance Manager / CFO", parentId: 1, department: "Management",
-                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=CFO",
+                imageUrl: "https://placehold.co/128x128/FF7300/FFFFFF?text=CFO", /* Updated to management orange */
                 description: `
                     <p><strong>Role:</strong> Finance Manager or Chief Financial Officer (CFO).</p>
                     <p><strong>Core Focus:</strong> Manages the team's financial resources, ensuring financial stability, compliance, and strategic alignment with organizational goals.</p>
@@ -383,7 +383,7 @@
             },
             {
                 id: 5, name: "Marketing / PR Manager", parentId: 1, department: "Management",
-                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=Mktg",
+                imageUrl: "https://placehold.co/128x128/FF7300/FFFFFF?text=Mktg", /* Updated to management orange */
                 description: `
                     <p><strong>Role:</strong> Marketing and Public Relations (PR) Manager.</p>
                     <p><strong>Core Focus:</strong> Builds and maintains the team's brand, engages with fans, and manages public image to attract fans, sponsors, and talent.</p>
@@ -400,7 +400,7 @@
             },
             {
                 id: 6, name: "Human Resources Manager", parentId: 1, department: "Management",
-                imageUrl: "https://placehold.co/128x128/F59E0B/FFFFFF?text=HR",
+                imageUrl: "https://placehold.co/128x128/FF7300/FFFFFF?text=HR", /* Updated to management orange */
                 description: `
                     <p><strong>Role:</strong> Human Resources (HR) Manager.</p>
                     <p><strong>Core Focus:</strong> Manages all personnel-related functions for non-athletic staff, fostering a positive and productive work environment and ensuring compliance with labor laws.</p>
@@ -417,7 +417,7 @@
             },
             {
                 id: 7, name: "Head Coach", parentId: 2, department: "Coaching",
-                imageUrl: "https://placehold.co/128x128/10B981/FFFFFF?text=Coach",
+                imageUrl: "https://placehold.co/128x128/53DA3F/FFFFFF?text=Coach", /* Updated to coaching green */
                 description: `
                     <p><strong>Role:</strong> Head Coach.</p>
                     <p><strong>Core Focus:</strong> Leads all on-field activities, develops game strategies and training methodologies, and motivates players to achieve peak performance and team success.</p>
@@ -435,7 +435,7 @@
             },
             {
                 id: 8, name: "Assistant Coach (Offense)", parentId: 7, department: "Coaching",
-                imageUrl: "https://placehold.co/128x128/10B981/FFFFFF?text=Asst.C",
+                imageUrl: "https://placehold.co/128x128/53DA3F/FFFFFF?text=Asst.C", /* Updated to coaching green */
                 description: `
                     <p><strong>Role:</strong> Assistant Coach (e.g., Offensive Coordinator).</p>
                     <p><strong>Core Focus:</strong> Assists the Head Coach with specific areas of game planning (e.g., offense), conducts drills, and contributes to player development within their specialized area.</p>
@@ -452,7 +452,7 @@
             },
             {
                 id: 9, name: "Assistant Coach (Defense)", parentId: 7, department: "Coaching",
-                imageUrl: "https://placehold.co/128x128/10B981/FFFFFF?text=Asst.C",
+                imageUrl: "https://placehold.co/128x128/53DA3F/FFFFFF?text=Asst.C", /* Updated to coaching green */
                 description: `
                     <p><strong>Role:</strong> Assistant Coach (e.g., Defensive Coordinator).</p>
                     <p><strong>Core Focus:</strong> Assists the Head Coach with specific areas of game planning (e.g., defense), conducts drills, and contributes to player development within their specialized area.</p>
@@ -469,7 +469,7 @@
             },
             {
                 id: 10, name: "Specialist Coach (e.g., Goalkeeping)", parentId: 7, department: "Coaching",
-                imageUrl: "https://placehold.co/128x128/10B981/FFFFFF?text=Spec.C",
+                imageUrl: "https://placehold.co/128x128/53DA3F/FFFFFF?text=Spec.C", /* Updated to coaching green */
                 description: `
                     <p><strong>Role:</strong> Specialist Coach (e.g., Goalkeeping, Set Pieces, Strength & Conditioning - if not separate dept).</p>
                     <p><strong>Core Focus:</strong> Provides highly specialized technical and tactical instruction for specific skills or player positions, designing and implementing tailored training programs.</p>
@@ -485,7 +485,7 @@
             },
             {
                 id: 11, name: "Head of Performance Analysis", parentId: 7, department: "Performance Analysis",
-                imageUrl: "https://placehold.co/128x128/2563EB/FFFFFF?text=HeadPA",
+                imageUrl: "https://placehold.co/128x128/FFDD00/000000?text=HeadPA",
                 description: `
                     <p><strong>Role:</strong> Head of Performance Analysis.</p>
                     <p><strong>Core Focus:</strong> Leads the performance analysis department, establishing workflows for data collection, analysis, and reporting to provide objective insights that inform coaching decisions and enhance player/team performance.</p>
@@ -503,7 +503,7 @@
             },
             {
                 id: 12, name: "Performance Analyst (Tactical)", parentId: 11, department: "Performance Analysis",
-                imageUrl: "https://placehold.co/128x128/2563EB/FFFFFF?text=PA-Tac",
+                imageUrl: "https://placehold.co/128x128/FFDD00/000000?text=PA-Tac",
                 description: `
                     <p><strong>Role:</strong> Performance Analyst (Tactical Focus).</p>
                     <p><strong>Core Focus:</strong> Analyzes video footage and data to assess tactical execution, scout opponents, and provide detailed reports to coaches for game planning and player feedback.</p>
@@ -520,7 +520,7 @@
             },
             {
                 id: 13, name: "Data Scientist", parentId: 11, department: "Performance Analysis",
-                imageUrl: "https://placehold.co/128x128/2563EB/FFFFFF?text=DataSci",
+                imageUrl: "https://placehold.co/128x128/FFDD00/000000?text=DataSci",
                 description: `
                     <p><strong>Role:</strong> Data Scientist.</p>
                     <p><strong>Core Focus:</strong> Applies advanced statistical methods, machine learning, and data modeling techniques to performance, tracking, and medical data to identify deeper trends, develop predictive models, and provide complex insights.</p>
@@ -537,7 +537,7 @@
             },
             {
                 id: 14, name: "Video Analyst", parentId: 11, department: "Performance Analysis",
-                imageUrl: "https://placehold.co/128x128/2563EB/FFFFFF?text=VidAna",
+                imageUrl: "https://placehold.co/128x128/FFDD00/000000?text=VidAna",
                 description: `
                     <p><strong>Role:</strong> Video Analyst.</p>
                     <p><strong>Core Focus:</strong> Films training and matches, codes (tags) key events, manages the video database, and produces video clips to support coaching and performance analysis.</p>
@@ -554,7 +554,7 @@
             },
              {
                 id: 15, name: "Head of Medical & Sports Science", parentId: 7, department: "Medical & Sports Science",
-                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=HeadMed",
+                imageUrl: "https://placehold.co/128x128/FF421D/FFFFFF?text=HeadMed",
                 description: `
                     <p><strong>Role:</strong> Head of Medical / Head of Sports Science / High Performance Manager.</p>
                     <p><strong>Core Focus:</strong> Oversees all medical and sports science provisions, developing strategies for injury prevention, rehabilitation, and performance optimization through a multidisciplinary approach.</p>
@@ -571,7 +571,7 @@
             },
             {
                 id: 16, name: "Team Physician", parentId: 15, department: "Medical & Sports Science",
-                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=Doctor",
+                imageUrl: "https://placehold.co/128x128/FF421D/FFFFFF?text=Doctor",
                 description: `
                     <p><strong>Role:</strong> Team Physician / Doctor.</p>
                     <p><strong>Core Focus:</strong> Provides primary medical care, diagnoses illnesses/injuries, oversees treatment plans, and makes final decisions on player medical availability, prioritizing athlete health.</p>
@@ -588,7 +588,7 @@
             },
             {
                 id: 17, name: "Athletic Trainer / Physiotherapist", parentId: 15, department: "Medical & Sports Science",
-                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=Physio",
+                imageUrl: "https://placehold.co/128x128/FF421D/FFFFFF?text=Physio",
                 description: `
                     <p><strong>Role:</strong> Athletic Trainer / Physiotherapist.</p>
                     <p><strong>Core Focus:</strong> Delivers hands-on treatment for injuries, develops and supervises rehabilitation programs, and implements injury prevention strategies. Often the first responder to injuries.</p>
@@ -605,7 +605,7 @@
             },
             {
                 id: 18, name: "Sports Scientist", parentId: 15, department: "Medical & Sports Science",
-                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=SportSci",
+                imageUrl: "https://placehold.co/128x128/FF421D/FFFFFF?text=SportSci",
                 description: `
                     <p><strong>Role:</strong> Sports Scientist (Physiology / Biomechanics Focus).</p>
                     <p><strong>Core Focus:</strong> Monitors player physical load, fatigue, and recovery using technology. Conducts fitness testing and provides data-driven recommendations to optimize training and performance while minimizing injury risk.</p>
@@ -622,7 +622,7 @@
             },
             {
                 id: 19, name: "Sports Nutritionist / Dietitian", parentId: 15, department: "Medical & Sports Science",
-                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=Nutrition",
+                imageUrl: "https://placehold.co/128x128/FF421D/FFFFFF?text=Nutrition",
                 description: `
                     <p><strong>Role:</strong> Sports Nutritionist / Dietitian.</p>
                     <p><strong>Core Focus:</strong> Develops individualized nutrition plans to optimize performance, recovery, and body composition. Educates players on dietary strategies and supplement use.</p>
@@ -639,7 +639,7 @@
             },
             {
                 id: 20, name: "Sports Psychologist", parentId: 15, department: "Medical & Sports Science",
-                imageUrl: "https://placehold.co/128x128/EF4444/FFFFFF?text=Psych",
+                imageUrl: "https://placehold.co/128x128/FF421D/FFFFFF?text=Psych",
                 description: `
                     <p><strong>Role:</strong> Sports Psychologist / Mental Skills Coach.</p>
                     <p><strong>Core Focus:</strong> Provides psychological support and counseling, teaches mental skills techniques (e.g., goal setting, imagery, stress management) to enhance performance and well-being.</p>
