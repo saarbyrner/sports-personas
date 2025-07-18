@@ -182,11 +182,17 @@
         .d3-node text.node-department-text {
             font-size: 10px;
             font-weight: 500;
-            fill: white;
+            fill: white; /* Default white, will be overridden by specific department classes */
             text-transform: uppercase;
             letter-spacing: 0.04em;
             dominant-baseline: middle;
         }
+        
+        /* Department-specific text colors for D3 nodes */
+        .d3-node text.node-department-text.coaching-text { fill: #000000; } /* Black text for green coaching */
+        .d3-node text.node-department-text.performance-text { fill: #000000; } /* Black text for yellow analysis */
+        .d3-node text.node-department-text.medical-text { fill: #FFFFFF; } /* White text for red medical */
+        .d3-node text.node-department-text.management-text { fill: #FFFFFF; } /* White text for orange management */
         .d3-link {
             fill: none;
             stroke: var(--light-text-primary); /* Updated to white for better visibility */
@@ -210,10 +216,10 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-        .badge-coaching { background-color: var(--light-accent2); } /* Green - #53DA3F */
-        .badge-medical { background-color: var(--light-accent4); } /* Red - #FF421D */
-        .badge-management { background-color: var(--light-accent3); } /* Orange - #FF7300 */
-        .badge-performance { background-color: var(--light-accent5); } /* Yellow - #FFDD00 for analysis */
+        .badge-coaching { background-color: var(--light-accent2); color: #000000; } /* Green - #53DA3F with black text */
+        .badge-medical { background-color: var(--light-accent4); color: #FFFFFF; } /* Red - #FF421D with white text */
+        .badge-management { background-color: var(--light-accent3); color: #FFFFFF; } /* Orange - #FF7300 with white text */
+        .badge-performance { background-color: var(--light-accent5); color: #000000; } /* Yellow - #FFDD00 with black text */
         .badge-default { background-color: var(--light-accent6); color: var(--light-text-primary); } /* Gray - #6A727E */
 
         .loader {
@@ -417,7 +423,7 @@
             },
             {
                 id: 7, name: "Head Coach", parentId: 2, department: "Coaching",
-                imageUrl: "https://placehold.co/128x128/53DA3F/FFFFFF?text=Coach", /* Updated to coaching green */
+                imageUrl: "https://placehold.co/128x128/53DA3F/000000?text=Coach", /* Updated to coaching green with black text */
                 description: `
                     <p><strong>Role:</strong> Head Coach.</p>
                     <p><strong>Core Focus:</strong> Leads all on-field activities, develops game strategies and training methodologies, and motivates players to achieve peak performance and team success.</p>
@@ -435,7 +441,7 @@
             },
             {
                 id: 8, name: "Assistant Coach (Offense)", parentId: 7, department: "Coaching",
-                imageUrl: "https://placehold.co/128x128/53DA3F/FFFFFF?text=Asst.C", /* Updated to coaching green */
+                imageUrl: "https://placehold.co/128x128/53DA3F/000000?text=Asst.C", /* Updated to coaching green with black text */
                 description: `
                     <p><strong>Role:</strong> Assistant Coach (e.g., Offensive Coordinator).</p>
                     <p><strong>Core Focus:</strong> Assists the Head Coach with specific areas of game planning (e.g., offense), conducts drills, and contributes to player development within their specialized area.</p>
@@ -452,7 +458,7 @@
             },
             {
                 id: 9, name: "Assistant Coach (Defense)", parentId: 7, department: "Coaching",
-                imageUrl: "https://placehold.co/128x128/53DA3F/FFFFFF?text=Asst.C", /* Updated to coaching green */
+                imageUrl: "https://placehold.co/128x128/53DA3F/000000?text=Asst.C", /* Updated to coaching green with black text */
                 description: `
                     <p><strong>Role:</strong> Assistant Coach (e.g., Defensive Coordinator).</p>
                     <p><strong>Core Focus:</strong> Assists the Head Coach with specific areas of game planning (e.g., defense), conducts drills, and contributes to player development within their specialized area.</p>
@@ -469,7 +475,7 @@
             },
             {
                 id: 10, name: "Specialist Coach (e.g., Goalkeeping)", parentId: 7, department: "Coaching",
-                imageUrl: "https://placehold.co/128x128/53DA3F/FFFFFF?text=Spec.C", /* Updated to coaching green */
+                imageUrl: "https://placehold.co/128x128/53DA3F/000000?text=Spec.C", /* Updated to coaching green with black text */
                 description: `
                     <p><strong>Role:</strong> Specialist Coach (e.g., Goalkeeping, Set Pieces, Strength & Conditioning - if not separate dept).</p>
                     <p><strong>Core Focus:</strong> Provides highly specialized technical and tactical instruction for specific skills or player positions, designing and implementing tailored training programs.</p>
@@ -794,7 +800,15 @@
                 .attr("rx", 0).attr("ry", 0); /* Removed corner radius for 90 degree corners */
 
             nodes.append("text")
-                .attr("class", "node-department-text")
+                .attr("class", d => {
+                    const dept = d.data.department;
+                    let textClass = "node-department-text";
+                    if (dept === "Coaching") textClass += " coaching-text";
+                    else if (dept === "Performance Analysis") textClass += " performance-text";
+                    else if (dept === "Medical & Sports Science") textClass += " medical-text";
+                    else if (dept === "Management") textClass += " management-text";
+                    return textClass;
+                })
                 .attr("x", nodeWidth / 2)
                 .attr("y", badgeY + departmentBadgeHeight / 2) 
                 .attr("text-anchor", "middle")
